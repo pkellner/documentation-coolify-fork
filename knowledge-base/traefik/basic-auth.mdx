@@ -1,12 +1,12 @@
 ---
-title: "Basic Auth"
+title: "BasicAuth Middleware"
 "og:title": "How to configure basic auth with Traefik in Coolify"
 description: "A guide to configure basic auth with Traefik in Coolify"
 ---
 
 The configuration is slightly different for `Standard Applications` and `Docker Compose` based applications/one-click services.
 
-All you need to do is to set custom labels on your application.
+All that is needed is to set custom labels on the Coolify application.
 
 ## Standard Applications
 
@@ -28,18 +28,23 @@ In the example above, we are using `test` as username and `test` as password.
 
 ## Docker Compose based Applications & one-click Services
 
-You only need to add the basicauth middleware.
+To add `basicauth` middleware to your service, you need to add the following labels to your `docker-compose.yml` file.:
 
 ```yaml
 services:
-  changedetection:
+  ngnix-simple-web-container::
+    image: 'nginx:alpine'
+    ports:
+      - '8080:80'
     labels:
       - 'traefik.http.middlewares.<random_unique_name>.basicauth.users=test:$2y$12$ci.4U63YX83CwkyUrjqxAucnmi2xXOIlEF6T/KdP9824f1Rf1iyNG'
 ```
 
-In the example above, we are using `test` as username and `test` as password.
+In this example, we are adding the `basicauth` middleware to the `nginx-simple-web-container` service. We are using `test` as username
+and `test` as password. In other words, any container that you add the above label to will be protected by this middleware.
 
-Enable `Escape special characters in labels?` when applying basic auth labels.
+When applying basic authentication labels, special characters like $, @, and , must be escaped to avoid parsing errors.
+That is for example, enclose the label values in quotes and use a backslash (\) before special characters if you're using double quotes.
 
 ## How to generate user/password?
 
@@ -50,3 +55,9 @@ You can generate one with the [htpasswd](https://httpd.apache.org/docs/current/p
 ```bash
 htpasswd -nbB test test
 ```
+
+This will generate a password hash for the user `test` with the password `test`.
+You can then replace `test` with the desired username and password. Then substitute the generated hash in the `basicauth.users` label above.
+
+Note: the `htpasswd` command is available on most Linux distributions. It is part of the `apache2-utils` package on Debian/Ubuntu and
+can be found [here](https://httpd.apache.org/docs/current/programs/htpasswd.html).
